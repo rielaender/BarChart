@@ -33,6 +33,7 @@ enum RoundedCorner: CaseIterable {
 struct BarShape: Shape {
     let cornerRadius: CGFloat
     let corners: [RoundedCorner]
+    let flatBottom = true
     
     func radius(for corner: RoundedCorner) -> CGFloat {
         if self.corners.contains(corner) {
@@ -57,12 +58,19 @@ struct BarShape: Shape {
         let p6 = CGPoint(x: rect.maxX, y: rect.minY + self.radius(for: .bottomRight))
         let p7 = CGPoint(x: rect.maxX - self.radius(for: .bottomRight), y: rect.minY)
         let p8 = CGPoint(x: rect.minX + self.radius(for: .bottomLeft), y: rect.minY)
+        let pBotLeft = CGPoint(x: rect.minX, y: rect.maxY)
+        let pBotRight = CGPoint(x: rect.maxX, y: rect.maxY)
         
         path.move(to: p1)
-        path.addLine(to: p2)
-        path.addQuadCurve(to: p3, control: control1)
-        path.addLine(to: p4)
-        path.addQuadCurve(to: p5, control: control2)
+        if self.flatBottom {
+            path.addLine(to: pBotLeft)
+            path.addLine(to: pBotRight)
+        } else {
+            path.addLine(to: p2)
+            path.addQuadCurve(to: p3, control: control1)
+            path.addLine(to: p4)
+            path.addQuadCurve(to: p5, control: control2)
+        }
         path.addLine(to: p6)
         path.addQuadCurve(to: p7, control: control3)
         path.addLine(to: p8)

@@ -37,19 +37,50 @@ struct ContentView: View {
     
     let chartHeight: CGFloat = 300
     let config = ChartConfiguration()
+    let animationDuration = 0.1
+    let ticksColor = Color(UIColor.systemGray5)
+    let labelsColor = Color.gray
+
     
     // MARK: - Selection Indicator
     
     let selectionIndicatorHeight: CGFloat = 60
     @State var selectedBarTopCentreLocation: CGPoint?
     @State var selectedEntry: ChartDataEntry?
+    @State var showSelectionIndicator: Bool = false
+    
+    init() {
+        self.config.xAxis.labelsColor = labelsColor
+        self.config.xAxis.ticksColor = ticksColor
+        self.config.xAxis.ticksStyle = StrokeStyle(lineWidth: 1, lineCap: .round, dash: [2, 4])
+        self.config.xAxis.ticksInterval = 6
+        self.config.xAxis.startTicksIntervalFromBeginning = true
+        
+        self.config.yAxis.labelsColor = labelsColor
+        self.config.yAxis.ticksColor = ticksColor
+        self.config.yAxis.ticksStyle = StrokeStyle(lineWidth: 1, lineCap: .round)
+    }
     
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 10) {
-                    self.selectableChartView()
-                    self.miniSelectableChartView()
+                    ZStack {
+                        VStack(alignment: .leading) {
+                            HStack {
+                                if !self.showSelectionIndicator {
+                                    Text("Verlangen nach Uhrzeit")
+                                }
+                                Spacer()
+                            }
+                            Spacer()
+                        }
+                        .background(Color(UIColor.systemBackground))
+                        .onTapGesture {
+                            self.resetSelection()
+                        }
+                        self.selectableChartView()
+                    }.padding()
                     Button(action: {
                         self.resetSelection()
                         self.config.data.entries = self.randomEntries()
@@ -67,7 +98,7 @@ struct ContentView: View {
                             self.config.objectWillChange.send()
                         })
                     }
-                    .navigationBarTitle(Text("SelectableBarChart"))
+                    .navigationBarTitle(Text("Meine Einträge"))
                 }
             }
         }.navigationViewStyle(StackNavigationViewStyle())
@@ -78,46 +109,39 @@ struct ContentView: View {
     func selectableChartView() -> some View {
         VStack(alignment: .leading, spacing: 0) {
             self.selectionIndicatorView()
+                .onTapGesture {
+                    self.resetSelection()
+                }
             self.chartView()
+                .background(Color(UIColor.systemBackground))
         }
         .frame(height: chartHeight)
-        .padding(15)
-    }
-    
-    func miniSelectableChartView() -> some View {
-        SelectableBarChartView<MiniSelectionIndicator>(config: self.config)
-            .onBarSelection { entry, location in
-                self.selectedBarTopCentreLocation = location
-                self.selectedEntry = entry
-            }
-            .selectionView {
-                MiniSelectionIndicator(entry: self.selectedEntry,
-                                       location: self.selectedBarTopCentreLocation)
-            }
-            .frame(height: self.chartHeight - self.selectionIndicatorHeight)
-            .padding(15)
     }
     
     func chartView() -> some View {
         GeometryReader { proxy in
             SelectableBarChartView<SelectionLine>(config: self.config)
                 .onBarSelection { entry, location in
-                    self.selectedBarTopCentreLocation = location
-                    self.selectedEntry = entry
+                    self.setSelection(location: location, entry: entry)
                 }
                 .selectionView {
                     SelectionLine(location: self.selectedBarTopCentreLocation,
-                                  height: proxy.size.height - 17)
+                                  height: proxy.size.height - 17,
+                                  color: Color(UIColor.systemGray4))
                 }
         }
     }
     
     func selectionIndicatorView() -> some View {
         Group {
-            if self.selectedEntry != nil && self.selectedBarTopCentreLocation != nil {
-                SelectionIndicator(entry: self.selectedEntry!,
+            if self.showSelectionIndicator && self.selectedEntry != nil && self.selectedBarTopCentreLocation != nil {
+                let x = Int(self.selectedEntry!.x)
+                let label = x == nil ? self.selectedEntry!.x : "\(x!)-\((x! + 1) % 24) Uhr"
+                let entry = ChartDataEntry(x: label, y: self.selectedEntry!.y)
+                SelectionIndicator(entry: entry,
                                    location: self.selectedBarTopCentreLocation!.x,
-                                   infoRectangleColor: Color(red: 241/255, green: 242/255, blue: 245/255))
+                                   infoRectangleColor: Color(UIColor.systemGray6),
+                                   unitLabel: "Verlangen")
             } else {
                 Rectangle().foregroundColor(.clear)
             }
@@ -127,22 +151,36 @@ struct ContentView: View {
     
     func randomEntries() -> [ChartDataEntry] {
         var entries = [ChartDataEntry]()
-        for data in 0..<15 {
-            let randomDouble = Double.random(in: -20...50)
-            let newEntry = ChartDataEntry(x: "\(2000+data)", y: randomDouble)
+        for data in 0..<24 {
+            let randomDouble = max(Double.random(in: -10...20), 0).rounded()
+            let newEntry = ChartDataEntry(x: "\(String(format: "%02d", data))", y: randomDouble)
             entries.append(newEntry)
         }
         return entries
     }
     
+    func setSelection(location: CGPoint, entry: ChartDataEntry) {
+        withAnimation(.easeIn(duration: self.animationDuration)) {
+            self.showSelectionIndicator = true
+            self.selectedBarTopCentreLocation = location
+            self.selectedEntry = entry
+        }
+    }
+    
     func resetSelection() {
-        self.selectedBarTopCentreLocation = nil
-        self.selectedEntry = nil
+        withAnimation(.easeIn(duration: self.animationDuration)) {
+            self.showSelectionIndicator = false
+            self.selectedBarTopCentreLocation = nil
+            self.selectedEntry = nil
+        }
     }
 }
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView()
+        Group {
+            ContentView()
+            ContentView().preferredColorScheme(.dark)
+        }
     }
 }

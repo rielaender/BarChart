@@ -40,6 +40,8 @@ public class XAxisReference: AxisBase {
         }
     }
     
+    @Published public var startTicksIntervalFromBeginning = false
+    
     private func validateTicksInterval() {
         if let newValue = self.ticksInterval, newValue < 1 {
             self.ticksInterval = nil

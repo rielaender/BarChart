@@ -31,7 +31,8 @@ struct SelectionIndicator: View {
     let entry: ChartDataEntry
     let location: CGFloat
     let infoRectangleColor: Color
-    let infoRectangleWidth: CGFloat = 70
+    let infoRectangleWidth: CGFloat = 110
+    let unitLabel: String
     
     var body: some View {
         GeometryReader { proxy in
@@ -41,7 +42,7 @@ struct SelectionIndicator: View {
                 VStack(alignment: .leading) {
                     HStack(alignment: .bottom, spacing: 2) {
                         Text("\(Int(self.entry.y))").font(.headline).fontWeight(.bold)
-                        Text("b").font(.footnote)
+                        Text(self.unitLabel).font(.footnote)
                             .foregroundColor(.gray).fontWeight(.bold)
                     }
                     Text(self.entry.x)

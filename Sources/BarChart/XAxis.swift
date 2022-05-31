@@ -64,27 +64,28 @@ struct XAxis: Identifiable {
         let maxLabelsCount = Int((frameWidth / averageLabelWidth))
         
         if let interval = self.ref.ticksInterval {
-            return self.calculateLabels(with: interval, to: maxLabelsCount)
+            return self.calculateLabels(with: interval, to: maxLabelsCount, fromBeginning: self.ref.startTicksIntervalFromBeginning)
         }
         
         if maxLabelsCount > 0, maxLabelsCount < self.data.count {
-            return self.calculateLabels(with: 2, to: maxLabelsCount)
+            return self.calculateLabels(with: 2, to: maxLabelsCount, fromBeginning: self.ref.startTicksIntervalFromBeginning)
         } else {
             return self.data
         }
     }
     
     private func calculateLabels(with interval: Int,
-                                 to maxLabelsCount: Int) -> [ChartDataEntry] {
-        let reversedData = Array(self.data.reversed())
+                                 to maxLabelsCount: Int,
+                                 fromBeginning: Bool) -> [ChartDataEntry] {
+        let data = fromBeginning ? self.data : Array(self.data.reversed())
         var finalLabels = [ChartDataEntry]()
         for index in stride(from: 0, through: self.data.count - 1, by: interval) {
-            finalLabels.append(reversedData[index])
+            finalLabels.append(data[index])
         }
         if finalLabels.count > maxLabelsCount {
             let adj = self.ref.ticksInterval ?? 1
-            return self.calculateLabels(with: interval + adj, to: maxLabelsCount)
+            return self.calculateLabels(with: interval + adj, to: maxLabelsCount, fromBeginning: fromBeginning)
         }
-        return Array(finalLabels.reversed())
+        return fromBeginning ? finalLabels : Array(finalLabels.reversed())
     }
 }

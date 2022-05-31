@@ -29,7 +29,8 @@ import SwiftUI
 struct SelectionLine: View {
     let location: CGPoint?
     let height: CGFloat
-    let color = Color(red: 100/255, green: 100/255, blue: 100/255)
+//    let color = Color(red: 100/255, green: 100/255, blue: 100/255)
+    let color: Color
 
     var body: some View {
         Group {
